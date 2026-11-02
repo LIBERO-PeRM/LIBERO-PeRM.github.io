@@ -78,11 +78,12 @@
       '<div class="clip"><video muted loop playsinline preload="metadata"></video></div>' +
       '<div class="p-top"><span class="lvl"></span><span class="p-id"></span>' +
         '<div class="p-ctl"><button type="button" data-act="toggle">Pause</button><button type="button" data-act="enlarge">Enlarge</button>' +
-          '<a data-act="curves" hidden>Download curves</a></div><div class="p-extra"></div></div>' +
+          '<a data-act="curves" hidden>Download curves</a><a data-act="hf" hidden target="_blank" rel="noopener">Demonstrations</a></div><div class="p-extra"></div></div>' +
       "<h3></h3><p class=\"p-task\"></p><p class=\"p-how\"></p><div class=\"readout\"></div>";
     var video = root.querySelector("video"), toggle = root.querySelector('[data-act="toggle"]');
     var extra = root.querySelector(".p-extra"), current = null;
     var curves = root.querySelector('[data-act="curves"]');   /* the per-step values behind the clip's curves */
+    var hfLink = root.querySelector('[data-act="hf"]');       /* the released demonstrations behind the clip, on Hugging Face */
     extra.className = opts.extraClass || "p-nav";
 
     function setToggle() { toggle.textContent = video.paused ? "Play" : "Pause"; }
@@ -112,7 +113,9 @@
         root.querySelector(".p-task").textContent = "Task: " + t.task;
         root.querySelector(".p-how").innerHTML = t.metrics.map(function (m) {
           return "<b>" + esc(t.metrics.length > 1 ? m.name : "Scored by") + (t.metrics.length > 1 ? ":</b> " : "</b> ") + esc(m.about) + ".";
-        }).join(" ") + (t.note ? " " + esc(t.note) : "") + (t.held ? " This curve is still under review." : "");
+        }).join(" ") + (t.note ? " " + esc(t.note) : "") + (t.held ? " This curve is still under review." : "") +
+          (t.hf ? ' <b>Released:</b> <a href="' + t.hf.pref + '" target="_blank" rel="noopener">' + t.hf.n_pref + " preference demonstrations</a>" +
+            (t.hf.no_pref ? ' and <a href="' + t.hf.no_pref + '" target="_blank" rel="noopener">' + t.hf.n_no_pref + " no-preference demonstrations</a>" : "") + " on Hugging Face." : "");
         root.querySelector(".readout").innerHTML = '<span class="r-title">Satisfaction at the end of the episode</span>' + t.final.map(function (f) {
           var m = t.metrics[f.m], row = lower(t.rows[f.r]);
           var label = t.metrics.length > 1 ? m.name + ", " + row.charAt(0).toLowerCase() + row.slice(1) : row;
@@ -126,6 +129,9 @@
           curves.setAttribute("download", "libero-perm_" + t.suite + "_" + t.id + "_curves.json");
           curves.title = "Per-step satisfaction and raw values for the rollouts in this clip (JSON)";
         } else curves.removeAttribute("href");
+        hfLink.hidden = !t.hf;
+        if (t.hf) { hfLink.href = t.hf.pref; hfLink.title = "The released demonstrations for this task on Hugging Face (HDF5)"; }
+        else hfLink.removeAttribute("href");
         video.pause(); video.poster = t.poster; video.src = t.video; video.load();
         if (autoplay && !reduceMotion) video.play().catch(function () {});
         setToggle();
